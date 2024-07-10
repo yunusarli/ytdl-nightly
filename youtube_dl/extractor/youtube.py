@@ -1655,18 +1655,19 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
 
         self.write_debug('Decrypted nsig {0} => {1}'.format(n, ret))
         return ret
-
+    
     def _extract_n_function_name(self, jscode):
-        func_name, idx = self._search_regex(
-            r'\.get\("n"\)\)&&\(b=(?P<nfunc>[a-zA-Z_$][\w$]*)(?:\[(?P<idx>\d+)\])?\([\w$]+\)',
-            jscode, 'Initial JS player n function name', group=('nfunc', 'idx'))
-        if not idx:
-            return func_name
+         func_name, idx = self._search_regex(
+             r'&&\(b=(?P<nfunc>[a-zA-Z_$][\w$]*)(?:\[(?P<idx>\d+)\])?\([\w$]+\)',
+             jscode, 'Initial JS player n function name', group=('nfunc', 'idx'))
+         if not idx:
+             return func_name
+ 
+         return self._parse_json(self._search_regex(
+             r'var {0}\s*=\s*(\[.+?\])\s*[,;]'.format(re.escape(func_name)), jscode,
+             'Initial JS player n function list ({0}.{1})'.format(func_name, idx)),
+             func_name, transform_source=js_to_json)[int(idx)]
 
-        return self._parse_json(self._search_regex(
-            r'var {0}\s*=\s*(\[.+?\])\s*[,;]'.format(re.escape(func_name)), jscode,
-            'Initial JS player n function list ({0}.{1})'.format(func_name, idx)),
-            func_name, transform_source=js_to_json)[int(idx)]
 
     def _extract_n_function_code(self, video_id, player_url):
         player_id = self._extract_player_info(player_url)
